@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>定期処理の実装テスト</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>定期スクリプト実行テスト</h2>
+    <p>このページを開いている間、バックグラウンドでタイマーが作動します。</p>
+    <p>※動作を確認するには、ブラウザの<strong>デベロッパーツール（F12キー）の「コンソール（Console）」タブ</strong>を開いてください。</p>
+</div>
+
+<script>
+    // 実行したい処理を関数として定義
+    function executeTask() {
+        const now = new Date();
+        console.log("【定期実行】処理が実行されました: " + now.toLocaleTimeString());
+    }
+
+    // --- 時間の設定 ---
+    // 1秒 = 1000ミリ秒
+    const oneHourInput = 1000 * 60 * 60; // 1時間（3,600,000ミリ秒）
+    const testInterval = 1000 * 5;       // テスト用：5秒（動作確認用）
+
+    // setInterval(実行したい関数, 間隔[ミリ秒])
+    // 実際の運用では oneHourInput を指定しますが、テスト用に現在は5秒に設定しています。
+    setInterval(executeTask, testInterval);
+
+    console.log("タイマースクリプトが開始されました。（5秒ごとにログが出力されます）");
+</script>
+
+</body>
+</html>
