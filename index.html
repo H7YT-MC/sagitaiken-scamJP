@@ -2,48 +2,274 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>定期処理の実装テスト</title>
+    <title>【教材】ソーシャルエンジニアリング体験</title>
     <style>
         body {
-            font-family: sans-serif;
-            padding: 20px;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .box {
+        .safety-header {
+            width: 100%;
+            background-color: #d93025;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 600px;
+            width: 90%;
             background: white;
-            padding: 20px;
+            margin-top: 40px;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .recaptcha-box {
+            display: flex;
+            align-items: center;
+            background: #f9f9f9;
+            border: 1px solid #d3d3d3;
+            border-radius: 3px;
+            padding: 15px;
+            width: 320px;
+            margin: 20px auto;
+        }
+        .recaptcha-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        .recaptcha-text {
+            font-size: 14px;
+            color: #555;
+            flex-grow: 1;
+            user-select: none;
+        }
+        
+        /* サイト内 偽ターミナル */
+        .fake-terminal-area {
+            display: none;
+            margin-top: 30px;
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            max-width: 500px;
+            box-shadow: inset 0 0 10px #000;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        .instruction {
+            color: #ff3333;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: sans-serif;
+        }
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+        }
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: 16px;
+            flex-grow: 1;
+            outline: none;
+        }
+        /* ポップアップ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border-top: 8px solid #d93025;
+        }
+        .modal-btn {
+            background: #d93025;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>定期スクリプト実行テスト</h2>
-    <p>このページを開いている間、バックグラウンドでタイマーが作動します。</p>
-    <p>※動作を確認するには、ブラウザの<strong>デベロッパーツール（F12キー）の「コンソール（Console）」タブ</strong>を開いてください。</p>
-</div>
+    <div class="safety-header">
+        これは「ClickFix」の手口を学ぶための【訓練・啓発用】模擬画面です。
+    </div>
 
-<script>
-    // 実行したい処理を関数として定義
-    function executeTask() {
-        const now = new Date();
-        console.log("【定期実行】処理が実行されました: " + now.toLocaleTimeString());
-    }
+    <div class="container" id="mainContainer">
+        <h2>コンテンツを表示するには認証が必要です</h2>
+        <p>あなたがロボットではないことを確認するため、以下のチェックボックスをオンにしてください。</p>
 
-    // --- 時間の設定 ---
-    // 1秒 = 1000ミリ秒
-    const oneHourInput = 1000 * 1 * 1; // 1時間（3,600,000ミリ秒）
-    const testInterval = 1000 * 5;       // テスト用：5秒（動作確認用）
+        <div class="recaptcha-box">
+            <input type="checkbox" id="captchaCheck" class="recaptcha-checkbox">
+            <label for="captchaCheck" class="recaptcha-text">私はロボットではありません</label>
+            <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" width="30" height="30" alt="recaptcha">
+        </div>
 
-    // setInterval(実行したい関数, 間隔[ミリ秒])
-    // 実際の運用では oneHourInput を指定しますが、テスト用に現在は5秒に設定しています。
-    setInterval(executeTask, testInterval);
+        <div class="fake-terminal-area" id="terminalArea">
+            <div class="instruction" id="terminalInstruction">
+                ⚠️ 認証エラーが発生しました。システムを修復するため、以下の黒い画面（ターミナル）を一度クリックし、キーボードの「Ctrl + V」を押してから「Enter」を押してください。
+            </div>
+            <div id="terminalLog">mysystem@verification:~$ </div>
+            <div class="terminal-input-line" id="inputLine">
+                <span>mysystem@verification:~$&nbsp;</span>
+                <input type="text" id="terminalInput" class="terminal-input" autocomplete="off">
+            </div>
+        </div>
+    </div>
 
-    console.log("タイマースクリプトが開始されました。（5秒ごとにログが出力されます）");
-</script>
+    <div class="modal-overlay" id="alertModal">
+        <div class="modal-box">
+            <h3 style="color: #d93025; margin-top: 0;">⚠️ 警告：システムが侵害されました</h3>
+            <p>不正な外部コマンドが実行され、ファイルシステムへのアクセスが検出されました。</p>
+            <p style="font-weight: bold; color: #333;">実際の攻撃であれば、この時点で手遅れです。</p>
+            <button class="modal-btn" onclick="endSimulation()">体験を終了して解説を見る</button>
+        </div>
+    </div>
 
+    <script>
+        const checkbox = document.getElementById('captchaCheck');
+        const terminalArea = document.getElementById('terminalArea');
+        const terminalInput = document.getElementById('terminalInput');
+        const terminalLog = document.getElementById('terminalLog');
+        const alertModal = document.getElementById('alertModal');
+        const mainContainer = document.getElementById('mainContainer');
+        const inputLine = document.getElementById('inputLine');
+        const terminalInstruction = document.getElementById('terminalInstruction');
+
+        // 1. チェックボックスがクリックされたらターミナルを出す
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                const dummyCommand = "echo window-apphacks.exe install ---";
+                navigator.clipboard.writeText(dummyCommand).catch(() => {});
+                
+                setTimeout(() => {
+                    terminalArea.style.display = 'block';
+                    terminalInput.focus();
+                }, 500);
+            }
+        });
+
+        // 2. ターミナル内の項目がどんどん埋まっていく（install演出）関数
+        function runTerminalInstall(callback) {
+            // 表示させたいインストール項目のリスト
+            const installSteps = [
+                { text: "  - Downloading window-apphacks.exe ... ", time: 600 },
+                { text: "  - Verifying package integrity ... ", time: 400 },
+                { text: "  - Unpacking core files ... ", time: 500 },
+                { text: "  - Installing system hooks ... ", time: 700 },
+                { text: "  - Updating registry entries ... ", time: 400 },
+                { text: "  - Configuring remote network access ... ", time: 600 }
+            ];
+
+            let stepIndex = 0;
+
+            function printStep() {
+                if (stepIndex < installSteps.length) {
+                    const currentStep = installSteps[stepIndex];
+                    
+                    // まず項目の文字を表示
+                    terminalLog.innerHTML += `<span>${currentStep.text}</span>`;
+                    terminalArea.scrollTop = terminalArea.scrollHeight;
+
+                    // 指定された時間（time）待ったあと、語尾に「[ DONE ]」や「[ OK ]」を追記して埋める
+                    setTimeout(() => {
+                        // 最後の文字の直後に [ DONE ] を追加して改行
+                        terminalLog.innerHTML += "<span style='color:#ffff00; font-weight:bold;'>[ DONE ]</span><br>";
+                        terminalArea.scrollTop = terminalArea.scrollHeight;
+                        
+                        stepIndex++;
+                        printStep(); // 次の項目へ
+                    }, currentStep.time);
+
+                } else {
+                    // すべての項目が埋まったら、最終的な破壊風メッセージを出してcallback（ポップアップ）へ
+                    setTimeout(() => {
+                        terminalLog.innerHTML += "<br><span style='color:#ff3333; font-weight:bold;'>CRITICAL ERROR: Unauthorized data transmission detected.</span><br>";
+                        terminalLog.innerHTML += "<span style='color:#ff3333;'>System core compromised. Exiting installer...</span><br>";
+                        terminalArea.scrollTop = terminalArea.scrollHeight;
+                        
+                        setTimeout(callback, 800);
+                    }, 500);
+                }
+            }
+
+            terminalLog.innerHTML += "<br><span style='color:#00aaff;'>Starting installation process...</span><br>";
+            printStep();
+        }
+
+        // 3. 偽ターミナル内でのEnterキー検知
+        terminalInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const value = this.value;
+                
+                if (value.includes("window-apphacks.exe")) {
+                    // 入力欄を隠し、案内文を書き換える
+                    inputLine.style.display = 'none';
+                    terminalInstruction.style.color = '#ffaa00';
+                    terminalInstruction.innerHTML = "⚠️ スクリプト実行中... 画面を閉じないでください。";
+                    
+                    // ユーザーが貼り付けたコマンドを確定表示
+                    terminalLog.innerHTML += "<span style='color:#fff;'>" + value + "</span><br>";
+                    
+                    // ターミナルの文字（install項目）がどんどん埋まる演出を開始
+                    runTerminalInstall(() => {
+                        // 埋まりきったらポップアップを出す
+                        alertModal.style.display = 'flex';
+                    });
+
+                } else {
+                    terminalLog.innerHTML += "<span style='color:#fff;'>" + value + "</span><br>command not found<br>mysystem@verification:~$ ";
+                    this.value = '';
+                }
+            }
+        });
+
+        // 4. ポップアップのボタンを押した後の最終解説
+        function endSimulation() {
+            alertModal.style.display = 'none';
+            mainContainer.innerHTML = `
+                <h2 style="color: #00875a;">体験終了（この画面は安全です）</h2>
+                <p>今行った操作は、近年多発している<b>「ClickFix」</b>と呼ばれる極めて危険な詐欺・ハッキング手口です。</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <ul style="text-align: left; line-height: 1.8;">
+                    <li><b>罠のポイント1：</b>最初のチェックボックスの裏で、コマンドが勝手にコピーされていました。</li>
+                    <li><b>罠のポイント2：</b>ターミナルでEnterを押した後、<code>Downloading... [ DONE ]</code> のように項目がどんどん自動で処理され、埋まっていくテキストが表示されました。</li>
+                    <li><b>恐怖の正体：</b>攻撃者はこのように「あたかも公式のシステムアップデートや修復が自動進行している」ような画面を文字（ログ）で演出し、ユーザーが我に返ってブラウザを閉じるのを引き止めようとします。</li>
+                </ul>
+                <p style="background: #fff9e6; padding: 15px; border-left: 5px solid #ffab00; text-align: left;">
+                    <b>💡 対策：</b>Webサイト上の指示で「黒い画面（コマンドプロンプトやPowerShell）を開いてCtrl+Vで貼り付ける」といった操作を求められた場合は、<b>100%詐欺</b>です。絶対に指示に従わず、ブラウザを閉じてください。
+                </p>
+            `;
+        }
+    </script>
 </body>
 </html>
